@@ -15,7 +15,9 @@
 #include <pwd.h>		// Needed for struct passwd
 #include <sys/stat.h>		// Needed for struct stat
 #include "sysmem.h"			// Needed for human_bytes (used by grader)
+#include <cstring>
 #include <string.h>			// Needed for strcmp, strcat
+#include <vector>
 
 using namespace std;
 
@@ -39,10 +41,15 @@ namespace heap_track {
 	void reset() { live = 0; peak = 0; total = 0; }
 }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
 void* operator new(std::size_t n) {
 	void* p = std::malloc(n + sizeof(std::size_t));
 	if (!p) throw std::bad_alloc();
-	*static_cast<std::size_t*>(p) = n;
+	std::memcpy(p, &n, sizeof(std::size_t));
 
 	if (heap_track::tracking_enabled) {
 		size_t now  = (heap_track::live += n);
@@ -55,14 +62,19 @@ void* operator new(std::size_t n) {
 }
 void operator delete(void* p) noexcept {
 	if (!p) return;
-	char* base = static_cast<char*>(p) - sizeof(std::size_t);
-	size_t n = *reinterpret_cast<std::size_t*>(base);
+	unsigned char* base = static_cast<unsigned char*>(p) - sizeof(std::size_t);
+	size_t n = 0;
+	std::memcpy(&n, base, sizeof(std::size_t));
 	if (heap_track::tracking_enabled) {
 		heap_track::live -= n;
 	}
 	std::free(base);
 }
 void operator delete(void* p, std::size_t) noexcept { ::operator delete(p); }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 
 namespace {
@@ -112,7 +124,7 @@ static struct FileData read_file(const char* test_file) {
 	if (f == NULL)
 		error("Can't open data file.");
 
-	if (fscanf(f, "%lld", &result.num_elems) != 1)
+	if (fscanf(f, "%d", &result.num_elems) != 1)
 		error("Failed to read number of elements from data file.");
 
 	result.elems = static_cast<long long int*>(calloc(result.num_elems, sizeof(long long int)));
@@ -122,7 +134,8 @@ static struct FileData read_file(const char* test_file) {
 			error("Failed to read long long integer from file.");
 	}
 
-	if (fscanf(f, "%*lld") != EOF)
+	long long int dummy;
+	if (fscanf(f, "%lld", &dummy) != EOF)
 		error("Unexpected file contents found after end of data.");
 
 	fclose(f);
@@ -175,12 +188,12 @@ void grader(const string& grade, uint64_t duration,
 	uint64_t minutes = duration / 60000;  duration -= minutes * 60000;
 	uint64_t seconds = duration / 1000;   duration -= seconds * 1000;
 
-	char timebuf[24];
+	char timebuf[128];
 	snprintf(timebuf, sizeof(timebuf), "%02llu:%02llu:%02llu:%03llu",
-	         (unsigned long long)hours,
-	         (unsigned long long)minutes,
-	         (unsigned long long)seconds,
-	         (unsigned long long)duration);
+	         static_cast<unsigned long long>(hours),
+	         static_cast<unsigned long long>(minutes),
+	         static_cast<unsigned long long>(seconds),
+	         static_cast<unsigned long long>(duration));
 
 	cout << "= "
 	     << setw(COL_NAME)  << left  << ""
@@ -399,28 +412,22 @@ int main() {
 		numFiles++;
 	}
 	closedir(dataFiles);
-	string fileNames[numFiles];
-	size_t counter = 0;
+	vector<string> fileNames;
+	fileNames.reserve(numFiles);
 
 	dataFiles = opendir(DATA_DIRECTORY);
 	if (dataFiles == NULL)
 		error("Could not open " DATA_DIRECTORY " for reading.");
 
-	char owner[numFiles][20] {};
-
 	for (struct dirent* entry; (entry = readdir(dataFiles)) != NULL; ) {
 		if (entry->d_name[0] == '.')
 			continue;
 
-		char test_file_name[strlen(entry->d_name) + strlen(DATA_DIRECTORY) + 1];
-		strcpy(test_file_name, DATA_DIRECTORY);
-		strcat(test_file_name, entry->d_name);
-		fileNames[counter] = test_file_name;
+		string test_file_name = string(DATA_DIRECTORY) + entry->d_name;
+		fileNames.push_back(test_file_name);
 
-		stat(test_file_name, &info);
+		stat(test_file_name.c_str(), &info);
 		pw = getpwuid(info.st_uid);
-
-		counter++;
 	}
 	if (errno != 0)
 		error("Error traversing the " DATA_DIRECTORY " directory.");
@@ -429,10 +436,10 @@ int main() {
 
 	grade_header("A22", pw);
 
-	std::sort(fileNames, fileNames + numFiles);
+	std::sort(fileNames.begin(), fileNames.end());
 
 	/* 1. Pick which data set to run against. */
-	size_t chosen = select_file(fileNames, numFiles);
+	size_t chosen = select_file(fileNames.data(), numFiles);
 	string selectedFile[1] = { fileNames[chosen] };
 
 	/* 2. Pick which algorithm(s) to run. */
