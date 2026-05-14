@@ -97,7 +97,7 @@ struct FileData {
 	long long int* elems;
 };
 
-#define DATA_DIRECTORY "/usr/share/CS1D/A1/data/"
+#define DATA_DIRECTORY "./data/"
 
 #define error(msg) do_error(msg, __FILE__, __LINE__)
 static void do_error(const char* msg, const char* file, unsigned line) {
