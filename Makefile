@@ -1,20 +1,12 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -O2 -g
-TARGET = sorts
-OBJS = main.o sorts.o
+CFLAGS = -Wall -Werror -Wpedantic -std=c++20 -pthread -O2 -g
+CC = g++
 
-all: $(TARGET)
+OBJECTS = main.o
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
+run-tests: $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $<
+main.o: main.cpp bubbleSort.h insertionSort.h merge.h sysmem.h live_monitor.h
 
 clean:
-	rm -f $(OBJS) $(TARGET)
-
-run-all:
-	./$(TARGET) -a 10000
-
-.PHONY: all clean run-all
+	rm -f run-tests *.o *~
