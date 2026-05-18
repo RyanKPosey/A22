@@ -3,12 +3,22 @@
 
 #include <cstddef>
 
-/* Function: bubbleSort
+/*
+ * bubbleSort
  * ---------------------------------------------------------------------------
- * Sorts an array of long long integers using the Bubble Sort algorithm.
- * 
+ * A simple, easy-to-understand sorting routine that repeatedly steps through
+ * the list, compares adjacent pairs, and swaps them if they are in the wrong
+ * order. It "bubbles" larger elements toward the end of the array on each
+ * pass.
+ *
+ * Notes for the reader:
+ * - This implementation is in-place and does not allocate extra memory.
+ * - It's a stable sort (equal elements keep their relative order).
+ * - Time complexity: O(n^2) in the worst and average cases. Good only for
+ *   very small input sizes or educational purposes.
+ *
  * Parameters:
- *   A: pointer to the array to sort
+ *   A: pointer to the array to sort (modified in-place)
  *   n: number of elements in the array
  */
 void bubbleSort(long long int A[], int n) {

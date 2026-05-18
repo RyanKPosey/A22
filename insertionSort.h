@@ -3,12 +3,22 @@
 
 #include <cstddef>
 
-/* Function: insertionSort
+/*
+ * insertionSort
  * ---------------------------------------------------------------------------
- * Sorts an array of long long integers using the Insertion Sort algorithm.
- * 
+ * A straightforward sorting method that builds the final sorted list one
+ * element at a time. For each element, it inserts that element into the
+ * already-sorted portion to its left.
+ *
+ * Notes for the reader:
+ * - This is an in-place, stable algorithm with low overhead.
+ * - Works very well for small arrays or arrays that are already nearly
+ *   sorted (best case O(n)). Worst-case time complexity is O(n^2).
+ * - Use this when simplicity and small memory footprint are more important
+ *   than raw speed on large inputs.
+ *
  * Parameters:
- *   A: pointer to the array to sort
+ *   A: pointer to the array to sort (modified in-place)
  *   n: number of elements in the array
  */
 void insertionSort(long long int A[], int n) {

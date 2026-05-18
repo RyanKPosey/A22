@@ -4,12 +4,23 @@
 #include <cstddef>
 #include <vector>
 
-/* Function: merge
+/*
+ * merge
  * ---------------------------------------------------------------------------
- * Merges two sorted subarrays A[p:q] and A[q+1:r] into a single sorted array.
- * 
+ * Helper that takes two adjacent sorted ranges inside the same array
+ * (A[p..q] and A[q+1..r]) and merges them into a single sorted range
+ * stored back into A[p..r]. This is the classic merge step used by
+ * merge sort.
+ *
+ * Notes for the reader:
+ * - This function allocates temporary vectors to hold the left and right
+ *   halves while merging. That makes the merge step simple and safe.
+ * - The merge is stable: equal elements from the left half precede
+ *   equal elements from the right half.
+ * - The work done is linear in the total number of elements merged.
+ *
  * Parameters:
- *   A: pointer to the array containing both subarrays
+ *   A: pointer to the array containing both subarrays (modified in-place)
  *   p: starting index of first subarray
  *   q: ending index of first subarray
  *   r: ending index of second subarray
@@ -85,15 +96,18 @@ void merge(long long int A[], int p, int q, int r) {
 	}
 }
 
-/* Function: mergeSortHelper
+/*
+ * mergeSortHelper
  * ---------------------------------------------------------------------------
- * Recursive helper function for merge sort.
- * Sorts A[p:r] in place.
- * 
- * Parameters:
- *   A: pointer to the array to sort
- *   p: starting index of subarray to sort
- *   r: ending index of subarray to sort
+ * The recursive part of merge sort. It splits the given range in half,
+ * recursively sorts each half, then merges them back together using
+ * the `merge` helper above.
+ *
+ * Notes for the reader:
+ * - Recursion depth is O(log n). Each level performs linear work,
+ *   so the overall time complexity is O(n log n).
+ * - Merge sort requires O(n) auxiliary space because of the temporary
+ *   arrays used during merging.
  */
 void mergeSortHelper(long long int A[], int p, int r) {
 	// if p >= r
@@ -116,13 +130,15 @@ void mergeSortHelper(long long int A[], int p, int r) {
 	merge(A, p, q, r);
 }
 
-/* Function: mergeSort
+/*
+ * mergeSort
  * ---------------------------------------------------------------------------
- * Sorts an array of long long integers using the Merge Sort algorithm.
- * 
- * Parameters:
- *   A: pointer to the array to sort
- *   n: number of elements in the array
+ * Top-level entry point for merge sort. Sorts the array A[0..n-1] in place
+ * by delegating to the recursive helper.
+ *
+ * Notes for the reader:
+ * - Use this when you need a reliable O(n log n) sort with stable output.
+ * - It uses extra memory proportional to the input size (for merges).
  */
 void mergeSort(long long int A[], int n) {
 	if (n > 0) {
